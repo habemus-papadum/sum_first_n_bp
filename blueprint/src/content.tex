@@ -1,13 +1,179 @@
-% In this file you should put the actual content of the blueprint.
-% It will be used both by the web and the print version.
-% It should *not* include the \begin{document}
-%
-% If you want to split the blueprint content into several files then
-% the current file can be a simple sequence of \input. Otherwise It
-% can start with a \section or \chapter for instance.
-\section{Introduction}
-sfsdfsgsd
-\section{Background}
-sdfsdfsd
-\section{Methodology}
-sdfsdfsd
+
+
+
+\chapter{Introduction}
+Hello!  This is a personal experiment to explore the \texttt{Lean4} plus \texttt{leanblueprint} workflow circa
+December 2024.  I had previously explored proving the formula for the sum of the first $n$ natural numbers 
+using \texttt{Lean4} and decided to "publish" the result using \texttt{leanblueprint}.     
+
+\chapter{Methodology}
+\section{Formalization to Lean}
+As a beginner to \texttt{Lean4}, I found the most difficult part of formalizing the proof to be finding the correct premises 
+in \texttt{Mathlib}.  To simplify things for myself, I expressed the bulk of the proof using the \texttt{calc} 
+tactic, introducing lemmas as needed to justify various steps.  Then I used a combination of Claude and
+GH Copilot to generate proof for each lemma.  In all instances, the generated proofs had minor errors in
+syntax, missing imports, or slighly incorrect premises.  But they were close enough that I could easily
+use \texttt{Goto Definition} in VSCode to find the correct premises in \texttt{Mathlib} and fix the errors.
+All in all, not a bad experience.  
+
+\section{\texttt{Blueprint}-fication}
+Given that my proof already was structured as a series of lemmas leading to a theorem, there was a natural
+fit to use \texttt{leanblueprint} to convert the proof to a more readable format.  Again, I chose to use
+Claude to bootstrap the process by asking it to convert the formal proof to latex, and then manually edited the output to fix 
+small syntax errors (again there were several small issues but the process was pretty nice).  
+The prompt that I used to generate the proof is included in the Appendix.
+
+
+\chapter {Proof of the Sum of the First $n$ Natural Numbers}
+
+\begin{lemma}[mul\_div\_2]
+\label{mul_div_2}
+\lean{mul_div_2}
+\leanok
+For any natural number $a$, we have:
+$\frac{2a}{2} = a$
+\end{lemma}
+\begin{proof}
+\leanok    
+Since 2 > 0, we can apply the cancellation property of multiplication and division.
+\end{proof}
+
+\begin{lemma}[div\_two\_add\_even]
+\label{div_two_add_even}
+\lean{div_two_add_even}
+\leanok
+For natural numbers $a$ and $b$, if 2 divides both $a$ and $b$, then:
+$\frac{a}{2} + \frac{b}{2} = \frac{a + b}{2}$
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{mul_div_2}
+Since 2 divides $a$ and $b$, there exist natural numbers $k$ and $m$ such that $a = 2k$ and $b = 2m$.
+Substituting these expressions:
+$\frac{2k}{2} + \frac{2m}{2} = \frac{2k + 2m}{2}$
+Using the distributive property of multiplication over addition:
+$\frac{2(k + m)}{2} = k + m = \frac{2k + 2m}{2}$
+where the middle equality follows from mul\_div\_2.
+\end{proof}
+
+\begin{lemma}[two\_div\_n\_or\_n\_add\_one]
+\label{two_div_n_or_n_add_one}
+\lean{two_div_n_or_n_add_one}
+\leanok
+
+For any natural number $n$, either 2 divides $n$ or 2 divides $(n+1)$.
+\end{lemma}
+\begin{proof}
+\leanok
+By the division algorithm, $n$ mod 2 is either 0 or 1.
+If $n$ mod 2 = 0, then 2 divides $n$.
+If $n$ mod 2 = 1, then $(n+1)$ mod 2 = 0. (since adding 1 to an odd number gives an even number), and thus 2 divides $(n+1)$.
+\end{proof}
+
+\begin{lemma} [n\_n\_plus\_1\_even]
+\label{n_n_plus_1_even}
+\lean{n_n_plus_1_even}
+\leanok
+For any natural number $n$, 2 divides $n(n+1)$.
+\end{lemma}
+\begin{proof}
+\leanok
+\uses{two_div_n_or_n_add_one}
+By two\_div\_n\_or\_n\_add\_one, we know that either 2 divides $n$ or 2 divides $(n+1)$.
+If 2 divides $n$, then 2 divides $n(n+1)$ since it divides one of its factors.
+Similarly, if 2 divides $(n+1)$, then 2 divides $n(n+1)$.
+\end{proof}
+
+\begin{theorem} [sum\_first\_n]
+\label{sum_first_n}
+\lean{sum_first_n}
+\leanok
+For any natural number $n$:
+$\sum_{i=0}^n i = \frac{n(n+1)}{2}$
+\end{theorem}
+
+\begin{proof}
+\leanok
+\uses{n_n_plus_1_even, div_two_add_even, mul_div_2}
+We proceed by induction on $n$.
+
+Base case: When $n = 0$, both sides equal 0.
+
+Inductive step: Assume the formula holds for some natural number $n$. We need to prove it for $(n+1)$.
+
+The left side equals:
+\[ \sum_{i=0}^{n+1} i = \sum_{i=0}^n i + (n+1) \]
+By the inductive hypothesis:
+\[= \frac{n(n+1)}{2} + (n+1) \]
+\[= \frac{n(n+1)}{2} + \frac{2(n+1)}{2} \]
+Since both $n(n+1)$ and $2(n+1)$ are even (by n\_n\_plus\_1\_even and the fact that 2 divides $2(n+1)$), we can apply div\_two\_add\_even:
+\[= \frac{n(n+1) + 2(n+1)}{2}\]
+\[= \frac{(n+1)(n+2)}{2}\]
+This completes the induction.
+\end{proof}
+
+\chapter{Appendix - Prompt}
+
+
+\begin{verbatim}
+convert the following lean4 proof of the formula for sum of first n naturals into a proof in latex using natural language. the latex proof should follow the structure of the lean4 proof (use the same lemmas and theorem names and logical reasoning. ).
+
+```lean4    
+    lemma mul_div_2 (a : ℕ) : 2 * a / 2 = a := by
+    -- This was generated by Claude
+    have h : 2 > 0 := by exact two_pos
+    rw [Nat.mul_div_cancel_left a h]
+  
+  
+  
+  lemma div_two_add_even (a b : ℕ) (ha : 2 ∣ a) (hb : 2 ∣ b) :
+      a/2 + b/2 = (a + b)/2 := by
+    -- This was generated by Claude; some tweaking needed (see below)
+    -- Get the numbers that a and b are double of
+    rcases ha with ⟨k, hk⟩
+    rcases hb with ⟨m, hm⟩
+    -- Substitute a = 2k and b = 2m
+    rw [hk, hm]
+    -- Now we have (2k)/2 + (2m)/2 = (2k + 2m)/2
+    rw [← mul_add  2 k m]
+    repeat rw [mul_div_2]
+  
+  
+  lemma two_div_n_or_n_add_one (n : ℕ) : 2 ∣ n ∨ 2 ∣ (n + 1) := by
+    -- Claude
+    have h := Nat.mod_two_eq_zero_or_one n
+    cases h with
+    | inl h0 => -- remainder 0
+      left
+      exact Nat.dvd_of_mod_eq_zero h0
+    | inr h1 => -- remainder 1
+      right
+      have h2 : (n + 1) % 2 = 0 := by
+        rw [Nat.add_mod, h1]
+      exact Nat.dvd_of_mod_eq_zero h2
+  
+  
+  -- Mostly generated by GH Copilot; some tweaking needed (I introduced above lemma, and fixed errors there)
+  lemma n_n_plus_1_even (n : ℕ) : ((2 : ℕ) ∣ (n * (n + 1))):= by
+    have h : 2 ∣ n ∨ 2 ∣ n + 1 := by
+      exact two_div_n_or_n_add_one n
+    cases h with
+    | inl hn => exact dvd_mul_of_dvd_left hn (n + 1)
+    | inr hn1 => exact dvd_mul_of_dvd_right hn1 n
+  
+  theorem sum_first_n  (n : ℕ) : ∑ i ∈ Finset.range (n + 1),  i = n*(n+1)/2:= by
+      induction n with
+      | zero => simp
+      | succ n ih =>
+          rw [Finset.sum_range_succ]
+          rw [ih]
+          calc
+            n * (n + 1) / 2 + n + 1
+                 = n * (n + 1) / 2 + (n + 1) := by ring_nf
+              _  =  n * (n + 1) / 2 + 2 * (n + 1) / 2 := by rw [mul_div_2]
+              _ = (n * (n + 1) + 2 * (n+1)) / 2 := by
+                have h : 2 ∣ 2 * (n + 1) := by exact dvd_mul_right 2 (n + 1)
+                rw [div_two_add_even (n * (n + 1)) (2 * (n + 1)) (n_n_plus_1_even n) h]
+              _ = (n + 1) * (n + 2) / 2 := by ring_nf    
+```
+\end{verbatim}
